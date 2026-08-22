@@ -8,6 +8,7 @@ A lightweight cross-platform desktop application for straightening photographed 
 - Drag and drop an image onto the app window
 - Rotate an image left or right before processing
 - Select corners in any order and drag markers for precise adjustment
+- Use the live magnifier and crosshair for precise corner placement
 - Preview the perspective-corrected result
 - Save the result as PNG, JPEG, or TIFF
 - Preserve the original source image
@@ -71,7 +72,7 @@ Windows users can also double-click `run_app.bat`. The batch launcher automatica
 1. Drag an image onto the application window, or select **Open image**.
 2. Use **Rotate left** or **Rotate right** if the page is not upright.
 3. Click the four corners of the document in any order.
-4. Drag the yellow corner markers to refine the selection.
+4. Use the magnified inset and crosshair while placing or dragging the yellow corner markers.
 5. Select **Extract page** to correct the perspective.
 6. Preview the result and select **Save result**.
 

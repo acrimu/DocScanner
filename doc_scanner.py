@@ -19,6 +19,9 @@ except ImportError:
 class DocumentScannerApp:
     MARKER_RADIUS = 7
     MARKER_HIT_RADIUS = 14
+    MAGNIFIER_SIZE = 180
+    MAGNIFIER_SOURCE_SIZE = 60
+    MAGNIFIER_MARGIN = 14
 
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
@@ -30,8 +33,10 @@ class DocumentScannerApp:
         self.source_image: Image.Image | None = None
         self.result_image: Image.Image | None = None
         self.display_photo: ImageTk.PhotoImage | None = None
+        self.magnifier_photo: ImageTk.PhotoImage | None = None
         self.points: list[tuple[float, float]] = []
         self.drag_index: int | None = None
+        self.pointer_position: tuple[float, float] | None = None
         self.scale = 1.0
         self.offset_x = 0.0
         self.offset_y = 0.0
@@ -65,6 +70,8 @@ class DocumentScannerApp:
         self.canvas.bind("<Button-1>", self.on_mouse_down)
         self.canvas.bind("<B1-Motion>", self.on_mouse_drag)
         self.canvas.bind("<ButtonRelease-1>", self.on_mouse_up)
+        self.canvas.bind("<Motion>", self.on_mouse_move)
+        self.canvas.bind("<Leave>", self.on_mouse_leave)
         if DND_FILES is not None:
             self.canvas.drop_target_register(DND_FILES)
             self.canvas.dnd_bind("<<Drop>>", self.on_file_drop)
@@ -157,6 +164,63 @@ class DocumentScannerApp:
             self.canvas.create_oval(x - r, y - r, x + r, y + r, fill="#ffcc00", outline="#111111", width=2)
             self.canvas.create_text(x + 14, y - 14, text=str(index + 1), fill="white", font=("TkDefaultFont", 10, "bold"))
 
+        self.draw_magnifier()
+
+    def draw_magnifier(self) -> None:
+        """Draw a zoomed view of the image beneath the pointer."""
+        self.canvas.delete("magnifier")
+        if self.source_image is None or self.pointer_position is None:
+            return
+
+        image_point = self.canvas_to_image(*self.pointer_position)
+        if image_point is None:
+            return
+
+        image_x, image_y = image_point
+        source_size = self.MAGNIFIER_SOURCE_SIZE
+        half_source = source_size / 2
+        crop = self.source_image.crop(
+            (
+                round(image_x - half_source),
+                round(image_y - half_source),
+                round(image_x + half_source),
+                round(image_y + half_source),
+            )
+        )
+        zoomed = crop.resize((self.MAGNIFIER_SIZE, self.MAGNIFIER_SIZE), Image.Resampling.NEAREST)
+        self.magnifier_photo = ImageTk.PhotoImage(zoomed)
+
+        canvas_width = max(1, self.canvas.winfo_width())
+        left = max(self.MAGNIFIER_MARGIN, canvas_width - self.MAGNIFIER_SIZE - self.MAGNIFIER_MARGIN)
+        top = self.MAGNIFIER_MARGIN
+        right = left + self.MAGNIFIER_SIZE
+        bottom = top + self.MAGNIFIER_SIZE
+        center_x = (left + right) / 2
+        center_y = (top + bottom) / 2
+
+        self.canvas.create_rectangle(
+            left - 3,
+            top - 3,
+            right + 3,
+            bottom + 3,
+            fill="#111111",
+            outline="#ffffff",
+            width=2,
+            tags="magnifier",
+        )
+        self.canvas.create_image(left, top, anchor=tk.NW, image=self.magnifier_photo, tags="magnifier")
+        self.canvas.create_line(center_x, top, center_x, bottom, fill="#00e5ff", width=1, tags="magnifier")
+        self.canvas.create_line(left, center_y, right, center_y, fill="#00e5ff", width=1, tags="magnifier")
+        self.canvas.create_oval(
+            center_x - 5,
+            center_y - 5,
+            center_x + 5,
+            center_y + 5,
+            outline="#ffcc00",
+            width=2,
+            tags="magnifier",
+        )
+
     def image_to_canvas(self, point: tuple[float, float]) -> tuple[float, float]:
         return point[0] * self.scale + self.offset_x, point[1] * self.scale + self.offset_y
 
@@ -173,6 +237,7 @@ class DocumentScannerApp:
     def on_mouse_down(self, event: tk.Event) -> None:
         if self.source_image is None:
             return
+        self.pointer_position = (event.x, event.y)
         for index, point in enumerate(self.points):
             x, y = self.image_to_canvas(point)
             if math.hypot(event.x - x, event.y - y) <= self.MARKER_HIT_RADIUS:
@@ -186,6 +251,7 @@ class DocumentScannerApp:
             self.redraw()
 
     def on_mouse_drag(self, event: tk.Event) -> None:
+        self.pointer_position = (event.x, event.y)
         if self.drag_index is None or self.source_image is None:
             return
         width, height = self.source_image.size
@@ -196,6 +262,14 @@ class DocumentScannerApp:
 
     def on_mouse_up(self, _event: tk.Event) -> None:
         self.drag_index = None
+
+    def on_mouse_move(self, event: tk.Event) -> None:
+        self.pointer_position = (event.x, event.y)
+        self.draw_magnifier()
+
+    def on_mouse_leave(self, _event: tk.Event) -> None:
+        self.pointer_position = None
+        self.canvas.delete("magnifier")
 
     @staticmethod
     def order_points(points: np.ndarray) -> np.ndarray:
@@ -233,15 +307,41 @@ class DocumentScannerApp:
             return
         window = tk.Toplevel(self.root)
         window.title("Extracted page")
-        screen_w = min(900, self.root.winfo_screenwidth() - 100)
-        screen_h = min(700, self.root.winfo_screenheight() - 100)
-        preview = self.result_image.copy()
-        preview.thumbnail((screen_w, screen_h), Image.Resampling.LANCZOS)
-        photo = ImageTk.PhotoImage(preview)
-        label = ttk.Label(window, image=photo)
-        label.image = photo
-        label.pack(padx=8, pady=8)
-        ttk.Button(window, text="Save result", command=self.save_result).pack(pady=(0, 8))
+        window_width = min(900, self.root.winfo_screenwidth() - 100)
+        window_height = min(700, self.root.winfo_screenheight() - 100)
+        window.geometry(f"{window_width}x{window_height}")
+        window.minsize(320, 240)
+
+        controls = ttk.Frame(window, padding=8)
+        controls.pack(side=tk.BOTTOM, fill=tk.X)
+        ttk.Button(controls, text="Save result", command=self.save_result).pack()
+
+        preview_area = tk.Frame(window, background="#252525")
+        preview_area.pack(fill=tk.BOTH, expand=True)
+        label = tk.Label(preview_area, background="#252525", borderwidth=0)
+        label.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
+
+        def resize_preview(event: tk.Event | None = None) -> None:
+            if self.result_image is None:
+                return
+            available_width = event.width - 16 if event is not None else label.winfo_width() - 16
+            available_height = event.height - 16 if event is not None else label.winfo_height() - 16
+            if available_width < 2 or available_height < 2:
+                return
+
+            image_width, image_height = self.result_image.size
+            scale = min(available_width / image_width, available_height / image_height)
+            preview_size = (
+                max(1, round(image_width * scale)),
+                max(1, round(image_height * scale)),
+            )
+            preview = self.result_image.resize(preview_size, Image.Resampling.LANCZOS)
+            photo = ImageTk.PhotoImage(preview)
+            label.config(image=photo)
+            label.image = photo
+
+        preview_area.bind("<Configure>", resize_preview)
+        window.after_idle(resize_preview)
 
     def save_result(self) -> None:
         if self.result_image is None:
