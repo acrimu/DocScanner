@@ -1,6 +1,6 @@
 # Document Perspective Scanner
 
-A lightweight application for straightening photographed or scanned documents. Select the four corners of a page and the app applies a perspective transform to produce a flat, rectangular image.
+A lightweight cross-platform desktop application for straightening photographed or scanned documents. Select the four corners of a page and the app applies a perspective transform to produce a flat, rectangular image.
 
 ## Features
 
@@ -14,9 +14,8 @@ A lightweight application for straightening photographed or scanned documents. S
 
 ## Requirements
 
-- Windows 10 or later
 - Python 3.10 or newer
-- Tkinter (included with standard Python installations from [python.org](https://www.python.org/))
+- Tkinter (included with standard Python installations on Windows and macOS; it may need to be installed separately on Linux)
 
 The Python packages used by the app are listed in [`requirements.txt`](requirements.txt): NumPy, OpenCV, Pillow, and tkinterdnd2.
 
@@ -29,7 +28,9 @@ git clone https://github.com/acrimu/DocScanner.git
 cd DocScanner
 ```
 
-Creating a virtual environment is recommended:
+Creating a virtual environment is recommended.
+
+### Windows (PowerShell)
 
 ```powershell
 py -3 -m venv .venv
@@ -38,15 +39,32 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
+### Linux and macOS
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+On Debian or Ubuntu, install Tkinter separately if it is unavailable:
+
+```bash
+sudo apt install python3-tk
+```
+
 ## Running the app
 
-Double-click `run_app.bat`, or run the application from PowerShell:
+Run the application on any supported platform with:
 
-```powershell
+```bash
 python doc_scanner.py
 ```
 
-The batch launcher automatically uses `.venv\Scripts\python.exe` when that virtual environment exists. Otherwise, it looks for the Python launcher (`py`) and then `python` on `PATH`.
+On systems where Python 3 is exposed as `python3`, use `python3 doc_scanner.py` instead.
+
+Windows users can also double-click `run_app.bat`. The batch launcher automatically uses `.venv\Scripts\python.exe` when that virtual environment exists. Otherwise, it looks for the Python launcher (`py`) and then `python` on `PATH`.
 
 ## Usage
 
@@ -63,7 +81,7 @@ The app orders the selected points around the page, calculates the target dimens
 
 ## Troubleshooting
 
-### Python was not found
+### Python was not found on Windows
 
 Install Python 3 from [python.org](https://www.python.org/downloads/). During installation, enable **Add Python to PATH**, then run `run_app.bat` again.
 
