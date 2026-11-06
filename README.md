@@ -65,7 +65,13 @@ python doc_scanner.py
 
 On systems where Python 3 is exposed as `python3`, use `python3 doc_scanner.py` instead.
 
-Windows users can also double-click `run_app.bat`. The batch launcher automatically uses `.venv\Scripts\python.exe` when that virtual environment exists. Otherwise, it looks for the Python launcher (`py`) and then `python` on `PATH`.
+Windows users can also double-click [`run_app.bat`](run_app.bat). The batch launcher automatically uses `.venv\Scripts\python.exe` when that virtual environment exists. Otherwise, it looks for the Python launcher (`py`) and then `python` on `PATH`.
+
+Linux and macOS users can run [`run_app.sh`](run_app.sh) from a terminal. It automatically uses `.venv/bin/python` when that virtual environment exists; otherwise, it looks for `python3` and then `python` on `PATH`:
+
+```bash
+./run_app.sh
+```
 
 ## Usage
 
@@ -104,6 +110,7 @@ The app still works through **Open image** if `tkinterdnd2` cannot be loaded. Re
 DocScanner/
 |-- doc_scanner.py    # GUI and perspective-correction logic
 |-- run_app.bat       # Windows launcher
+|-- run_app.sh        # Linux and macOS launcher
 |-- requirements.txt  # Python dependencies
 |-- LICENSE
 `-- README.md
