@@ -73,6 +73,44 @@ Linux and macOS users can run [`run_app.sh`](run_app.sh) from a terminal. It aut
 ./run_app.sh
 ```
 
+### Build a macOS app
+
+On a Mac, run the build script from the project directory:
+
+```bash
+./build_mac_app.sh
+```
+
+The script creates an isolated `.build-venv`, installs the requirements and PyInstaller, and builds `dist/Document Perspective Scanner.app`. Open it with:
+
+```bash
+open "dist/Document Perspective Scanner.app"
+```
+
+Build on macOS for the processor architecture you intend to support. Apps shared with other people may need to be signed and notarized to avoid Gatekeeper warnings.
+
+### Build a Windows app
+
+On Windows, double-click [`build_windows_app.bat`](build_windows_app.bat) or run it from Command Prompt in the project directory. It creates an isolated `.build-venv`, installs the requirements and PyInstaller, and builds:
+
+```text
+dist\Document Perspective Scanner\Document Perspective Scanner.exe
+```
+
+Build on Windows for the processor architecture you intend to support. Share the entire `Document Perspective Scanner` folder inside `dist`, not just the `.exe`, because PyInstaller's default build includes supporting files alongside it.
+
+### Build a Linux app
+
+On Linux, install Tkinter if needed (on Debian or Ubuntu: `sudo apt install python3-tk`) and run:
+
+```bash
+./build_linux_app.sh
+```
+
+The script creates an isolated `.build-venv-linux`, installs the requirements and PyInstaller, and builds `dist/Document Perspective Scanner/Document Perspective Scanner`. Share the entire `Document Perspective Scanner` folder inside `dist`, not just the executable, because PyInstaller's default build includes supporting files alongside it.
+
+Build on Linux for the distribution and processor architecture you intend to support. PyInstaller does not bundle all system libraries, so the built app may also require system libraries available on the target Linux distribution.
+
 ## Usage
 
 1. Drag an image onto the application window, or select **Open image**.
@@ -111,6 +149,9 @@ DocScanner/
 |-- doc_scanner.py    # GUI and perspective-correction logic
 |-- run_app.bat       # Windows launcher
 |-- run_app.sh        # Linux and macOS launcher
+|-- build_mac_app.sh  # macOS app builder
+|-- build_windows_app.bat # Windows app builder
+|-- build_linux_app.sh # Linux app builder
 |-- requirements.txt  # Python dependencies
 |-- LICENSE
 `-- README.md
